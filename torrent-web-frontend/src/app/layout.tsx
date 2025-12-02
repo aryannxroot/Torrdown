@@ -1,12 +1,14 @@
+import "./globals.css";
+
 export const metadata = {
-  title: "Torrdown",
-  description: "Torrent downloader UI",
+  title: "Torrdown - Premium Torrent Downloader",
+  description: "A minimalistic, award-winning torrent downloader interface",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: "sans-serif", background: "#111", color: "white" }}>
+      <body>
         {children}
       </body>
     </html>
