@@ -54,46 +54,48 @@ export function MagnetSelector({ movie, magnets, onClose, onDownload }: MagnetSe
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-2xl bg-zinc-900 rounded-3xl border border-zinc-800/80 shadow-[0_20px_70px_rgba(0,0,0,0.9)] overflow-hidden"
+          className="w-full max-w-2xl bg-zinc-900 rounded-3xl border border-zinc-800/80 shadow-[0_20px_70px_rgba(0,0,0,0.9)] overflow-hidden relative"
         >
-          <div className="relative h-100 bg-gradient-to-br from-zinc-800 to-zinc-900 overflow-hidden">
-            {movie.cover && (
-              <div className="absolute inset-0">
-                <img
-                  src={`https://www.yts-official.cc${movie.cover}`}
-                  alt={movie.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/60 to-transparent" />
-              </div>
-            )}
-
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 flex items-center justify-center transition-colors border border-zinc-700/50"
-            >
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-
-            <div className="absolute bottom-6 left-6 right-6">
-              <h2 className="text-2xl font-bold text-white mb-1">{movie.title}</h2>
-              <p className="text-sm text-zinc-400">{movie.year}</p>
+          {/* Full card background image */}
+          {movie.cover && (
+            <div className="absolute inset-0">
+              <img
+                src={`https://www.yts-official.cc${movie.cover}`}
+                alt={movie.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/90 to-zinc-900/40" />
             </div>
+          )}
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 flex items-center justify-center transition-colors border border-zinc-700/50"
+          >
+            <svg
+              className="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          {/* Movie title header */}
+          <div className="relative pt-32 pb-6 px-6">
+            <h2 className="text-2xl font-bold text-white mb-1">{movie.title}</h2>
+            <p className="text-sm text-zinc-400">{movie.year}</p>
           </div>
 
-          <div className="p-6 space-y-4">
+          {/* Quality selector content */}
+          <div className="relative p-6 pt-0 space-y-4">
             <div>
               <h3 className="text-sm font-semibold tracking-[0.2em] text-zinc-400 uppercase mb-3">
                 Select Quality
