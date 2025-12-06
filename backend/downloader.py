@@ -20,7 +20,7 @@ class TorrentDownloader:
         self.session.listen_on(6881, 6891)
 
         params = {
-            "save_path": "./downloads",
+            "save_path": ".",  # Current directory (set to ~/Torrdown/downloads by server.py)
         }
 
         self.handle = lt.add_magnet_uri(self.session, self.magnet, params)

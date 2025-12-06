@@ -15,13 +15,18 @@ else:
     # Running as script
     application_path = os.path.dirname(os.path.abspath(__file__))
 
-# Change to the application directory
-os.chdir(application_path)
+# Use user's home directory for downloads (writable location)
+# This works on Windows, macOS, and Linux
+home_dir = os.path.expanduser("~")
+torrdown_dir = os.path.join(home_dir, "Torrdown")
+downloads_dir = os.path.join(torrdown_dir, "downloads")
 
-# Create downloads directory if it doesn't exist
-downloads_dir = os.path.join(application_path, 'downloads')
+# Create directories if they don't exist
 if not os.path.exists(downloads_dir):
     os.makedirs(downloads_dir)
+
+# Change to downloads directory for file operations
+os.chdir(downloads_dir)
 
 import uvicorn
 from main import app
