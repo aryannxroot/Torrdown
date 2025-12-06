@@ -66,15 +66,15 @@
       "electron/**/*",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "../backend/dist/torrent_server",
-        "to": "python-backend/torrent_server"
-      }
-    ],
     "linux": {
       "target": ["AppImage"],
-      "category": "Network"
+      "category": "Network",
+      "extraResources": [
+        {
+          "from": "../backend/dist/torrent_server",
+          "to": "python-backend/torrent_server"
+        }
+      ]
     },
     "win": {
       "target": ["nsis"],
