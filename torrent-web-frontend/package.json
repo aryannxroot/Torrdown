@@ -66,37 +66,28 @@
       "electron/**/*",
       "package.json"
     ],
-    "linux": {
-      "target": ["AppImage"],
-      "category": "Network",
-      "extraResources": [
-        {
-          "from": "../backend/dist/torrent_server",
-          "to": "python-backend/torrent_server"
-        }
-      ]
+    "extraMetadata": {
+      "name": "torrdown"
     },
     "win": {
-      "target": ["nsis"],
+      "target": ["nsis", "portable"],
+      "certificateFile": null,
+      "certificatePassword": null,
+      "sign": null,
+      "signingHashAlgorithms": ["sha256"],
       "extraResources": [
         {
-          "from": "../backend/dist/torrent_server.exe",
+          "from": "./python-backend/torrent_server.exe",
           "to": "python-backend/torrent_server.exe"
-        }
-      ]
-    },
-    "mac": {
-      "target": ["dmg"],
-      "extraResources": [
-        {
-          "from": "../backend/dist/torrent_server",
-          "to": "python-backend/torrent_server"
         }
       ]
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Torrdown"
     }
   }
 }

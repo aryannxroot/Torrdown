@@ -1,30 +1,22 @@
-name: Build & Release Desktop App
+name: Build Desktop App
 
 on:
   push:
     branches:
-      - electron-app
-    tags:
-      - 'v*'  # Triggers on version tags like v1.0.0
+      - electron-app-win
   workflow_dispatch:  # Allow manual trigger
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-backend:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
-            platform: linux
-            executable: torrent_server
           - os: windows-latest
             platform: win
             executable: torrent_server.exe
-          - os: macos-latest
-            platform: mac
-            executable: torrent_server
 
     runs-on: ${{ matrix.os }}
     
@@ -36,6 +28,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+
+      - name: Install OpenSSL 1.1 (Windows)
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $openssl_url = 'https://slproweb.com/download/Win64OpenSSL-1_1_1w.msi'
+          $openssl_file = 'C:\temp\openssl.msi'
+          New-Item -ItemType Directory -Force -Path 'C:\temp' | Out-Null
+          Invoke-WebRequest -Uri $openssl_url -OutFile $openssl_file -UseBasicParsing
+          Start-Process $openssl_file -ArgumentList '/quiet /norestart' -Wait
+          Write-Host 'OpenSSL installation completed'
 
       - name: Install Python dependencies
         working-directory: backend
@@ -56,23 +59,7 @@ jobs:
 
   build-electron:
     needs: build-backend
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-22.04
-            platform: linux
-            backend-artifact: backend-linux
-            backend-exec: torrent_server
-          - os: windows-latest
-            platform: win
-            backend-artifact: backend-win
-            backend-exec: torrent_server.exe
-          - os: macos-latest
-            platform: mac
-            backend-artifact: backend-mac
-            backend-exec: torrent_server
-
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -88,12 +75,15 @@ jobs:
       - name: Download backend artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.backend-artifact }}
+          name: backend-win
           path: backend/dist
 
-      - name: Make backend executable (Unix)
-        if: matrix.platform != 'win'
-        run: chmod +x backend/dist/${{ matrix.backend-exec }}
+      - name: Copy backend to frontend resources
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path 'torrent-web-frontend/python-backend' | Out-Null
+          Copy-Item -Path 'backend/dist/torrent_server.exe' -Destination 'torrent-web-frontend/python-backend/torrent_server.exe' -Force
+          Write-Host 'Backend copied to frontend resources'
 
       - name: Install frontend dependencies
         working-directory: torrent-web-frontend
@@ -103,67 +93,19 @@ jobs:
         working-directory: torrent-web-frontend
         run: npm run build
 
-      - name: Clean dist folder (Unix)
-        if: matrix.platform != 'win'
-        working-directory: torrent-web-frontend
-        run: rm -rf dist
-
-      - name: Clean dist folder (Windows)
-        if: matrix.platform == 'win'
+      - name: Clean dist folder
         working-directory: torrent-web-frontend
         shell: pwsh
         run: if (Test-Path dist) { Remove-Item -Recurse -Force dist }
 
-      - name: Build Electron (Linux)
-        if: matrix.platform == 'linux'
+      - name: Build Electron (Windows Portable)
         working-directory: torrent-web-frontend
-        run: npx electron-builder --linux AppImage --publish never
-
-      - name: Build Electron (Windows)
-        if: matrix.platform == 'win'
-        working-directory: torrent-web-frontend
-        run: npx electron-builder --win nsis --publish never
-
-      - name: Build Electron (macOS)
-        if: matrix.platform == 'mac'
-        working-directory: torrent-web-frontend
-        run: npx electron-builder --mac dmg --publish never
+        run: npx electron-builder --win portable --publish never
 
       - name: Upload Electron artifact
         uses: actions/upload-artifact@v4
         with:
-          name: torrdown-${{ matrix.platform }}
-          path: |
-            torrent-web-frontend/dist/*.AppImage
-            torrent-web-frontend/dist/*.exe
-            torrent-web-frontend/dist/*.dmg
-            torrent-web-frontend/dist/*.zip
+          name: torrdown-win
+          path: torrent-web-frontend/dist/*.exe
           if-no-files-found: ignore
-
-  release:
-    needs: build-electron
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Display structure
-        run: ls -R artifacts
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            artifacts/torrdown-linux/*
-            artifacts/torrdown-win/*
-            artifacts/torrdown-mac/*
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

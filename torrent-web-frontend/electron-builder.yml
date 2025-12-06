@@ -23,24 +23,11 @@ extraResources:
     filter:
       - "**/*"
 
-# macOS configuration
+# macOS configuration (disabled for Windows-only build)
 mac:
   category: public.app-category.utilities
-  target:
-    - target: dmg
-      arch:
-        - x64
-        - arm64
-    - target: zip
-      arch:
-        - x64
-        - arm64
+  target: []
   icon: build/icon.icns
-  darkModeSupport: true
-  hardenedRuntime: true
-  gatekeeperAssess: false
-  entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.mac.plist
 
 # Windows configuration
 win:
@@ -53,6 +40,10 @@ win:
         - x64
   icon: build/icon.ico
   artifactName: "${productName}-${version}-${arch}.${ext}"
+  certificateFile: null
+  certificatePassword: null
+  signingHashAlgorithms:
+    - sha256
 
 # NSIS installer configuration for Windows
 nsis:
@@ -64,18 +55,11 @@ nsis:
   createStartMenuShortcut: true
   shortcutName: Torrdown
 
-# Linux configuration
+# Linux configuration (disabled for Windows-only build)
 linux:
-  target:
-    - target: AppImage
-      arch:
-        - x64
-    - target: deb
-      arch:
-        - x64
+  target: []
   category: Network
   icon: build/icons
-  artifactName: "${productName}-${version}-${arch}.${ext}"
 
 # DMG configuration for macOS
 dmg:
