@@ -5,6 +5,7 @@ Run with: pyinstaller torrent_server.spec
 """
 
 import sys
+import os
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
@@ -46,10 +47,64 @@ hidden_imports += collect_submodules('fastapi')
 hidden_imports += collect_submodules('starlette')
 hidden_imports += collect_submodules('pydantic')
 
+# Collect binaries for libtorrent and other dependencies
+binaries = []
+
+# Dynamically find site-packages
+import site
+site_packages_dirs = site.getsitepackages()
+if site_packages_dirs:
+    site_packages = site_packages_dirs[0]
+else:
+    site_packages = os.path.join(os.path.dirname(sys.executable), 'lib', 'site-packages')
+
+print(f"Using site-packages: {site_packages}")
+
+# Collect libtorrent module and all its binaries
+try:
+    import libtorrent
+    libtorrent_path = os.path.dirname(libtorrent.__file__)
+    print(f"Found libtorrent at: {libtorrent_path}")
+    
+    # Add the entire libtorrent module including compiled extensions
+    binaries.append((libtorrent_path, 'libtorrent'))
+    
+    # Also look for .pyd/.so files in site-packages that might be dependencies
+    if os.path.exists(site_packages):
+        for filename in os.listdir(site_packages):
+            filepath = os.path.join(site_packages, filename)
+            if filename.endswith('.pyd') or filename.endswith('.so'):
+                # Only add critical binary extensions, not all of them
+                if any(x in filename.lower() for x in ['torrent', 'boost']):
+                    binaries.append((filepath, '.'))
+                    print(f"Adding binary: {filename}")
+except ImportError as e:
+    print(f"WARNING: Could not import libtorrent: {e}")
+
+# Add OpenSSL 1.1 DLLs for libtorrent support on any Windows system
+openssl_paths = [
+    'C:\\Program Files\\OpenSSL-Win64\\bin',
+    'C:\\Program Files (x86)\\OpenSSL-Win32\\bin',
+    os.path.join(os.path.dirname(sys.executable), '..', '..', 'Library', 'bin'),
+]
+
+for openssl_path in openssl_paths:
+    if os.path.exists(openssl_path):
+        print(f"Found OpenSSL at: {openssl_path}")
+        # Add the OpenSSL DLLs to the root of the dist folder
+        for dll_name in ['libssl-1_1-x64.dll', 'libcrypto-1_1-x64.dll', 'libssl-1_1.dll', 'libcrypto-1_1.dll']:
+            dll_path = os.path.join(openssl_path, dll_name)
+            if os.path.exists(dll_path):
+                binaries.append((dll_path, '.'))
+                print(f"Adding OpenSSL DLL: {dll_name}")
+        break
+else:
+    print("WARNING: OpenSSL 1.1 not found. libtorrent may fail on systems without OpenSSL installed.")
+
 a = Analysis(
     ['server.py'],
     pathex=['.'],
-    binaries=[],
+    binaries=binaries,
     datas=[
         ('main.py', '.'),
         ('yts.py', '.'),

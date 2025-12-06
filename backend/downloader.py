@@ -1,6 +1,17 @@
-import libtorrent as lt
 import time
 import uuid
+import sys
+import os
+
+# Try to import libtorrent at module level
+try:
+    import libtorrent as lt
+except ImportError as e:
+    print(f"ERROR: Failed to import libtorrent: {e}", file=sys.stderr)
+    print(f"Current directory: {os.getcwd()}", file=sys.stderr)
+    print(f"sys.path: {sys.path}", file=sys.stderr)
+    # Raise to fail early
+    raise
 
 downloads = {}
 
@@ -16,48 +27,55 @@ class TorrentDownloader:
         self.status = "downloading"  # downloading, paused, stopped, completed
 
     def download(self):
-        self.session = lt.session()
-        self.session.listen_on(6881, 6891)
+        try:
+            self.session = lt.session()
+            self.session.listen_on(6881, 6891)
 
-        params = {
-            "save_path": ".",  # Current directory (set to ~/Torrdown/downloads by server.py)
-        }
+            params = {
+                "save_path": ".",  # Current directory (set to ~/Torrdown/downloads by server.py)
+            }
 
-        self.handle = lt.add_magnet_uri(self.session, self.magnet, params)
+            self.handle = lt.add_magnet_uri(self.session, self.magnet, params)
 
-        # Wait for metadata
-        while not self.handle.has_metadata():
-            if self.stopped:
-                self._cleanup()
-                return
-            print("Fetching metadata...")
-            time.sleep(1)
+            # Wait for metadata
+            while not self.handle.has_metadata():
+                if self.stopped:
+                    self._cleanup()
+                    return
+                print("Fetching metadata...")
+                time.sleep(1)
 
-        # Download loop
-        while self.handle.status().state != lt.torrent_status.seeding:
-            # Check if stopped
-            if self.stopped:
-                self._cleanup()
-                return
-            
-            # Handle pause
-            if self.paused:
-                if not self.handle.status().paused:
-                    self.handle.pause()
-                time.sleep(0.5)
-                continue
-            else:
-                if self.handle.status().paused:
-                    self.handle.resume()
-            
-            status = self.handle.status()
-            self.progress = round(status.progress * 100, 2)
-            print(f"Progress: {self.progress}% | Download rate: {status.download_rate / 1000:.2f} kB/s | Peers: {status.num_peers}")
-            time.sleep(1)
+            # Download loop
+            while self.handle.status().state != lt.torrent_status.seeding:
+                # Check if stopped
+                if self.stopped:
+                    self._cleanup()
+                    return
+                
+                # Handle pause
+                if self.paused:
+                    if not self.handle.status().paused:
+                        self.handle.pause()
+                    time.sleep(0.5)
+                    continue
+                else:
+                    if self.handle.status().paused:
+                        self.handle.resume()
+                
+                status = self.handle.status()
+                self.progress = round(status.progress * 100, 2)
+                print(f"Progress: {self.progress}% | Download rate: {status.download_rate / 1000:.2f} kB/s | Peers: {status.num_peers}")
+                time.sleep(1)
 
-        print("Download completed!")
-        self.progress = 100
-        self.status = "completed"
+            print("Download completed!")
+            self.progress = 100
+            self.status = "completed"
+        except Exception as e:
+            print(f"ERROR in download thread: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()
+            self.status = "error"
+            self._cleanup()
 
     def pause(self):
         """Pause the download"""
