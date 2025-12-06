@@ -10,6 +10,7 @@ import { MagnetSelector } from "./components/MagnetSelector";
 import { ParticleField } from "./components/ParticleField";
 import { CustomCursor } from "./components/CustomCursor";
 import { SmoothScroll } from "./components/SmoothScroll";
+import { getBackendUrl, getWebSocketUrl } from "@/lib/config";
 
 interface Movie {
   title: string;
@@ -51,7 +52,8 @@ export default function Page() {
   const heroRef = useRef<HTMLDivElement>(null);
   const reconnectAttempts = useRef<Map<string, number>>(new Map());
 
-  const backend = "http://127.0.0.1:8000";
+  // Get backend URL (works in both web and Electron)
+  const backend = getBackendUrl();
 
   const connectWS = useCallback((id: string, isReconnect: boolean = false) => {
     // Close existing connection if any
@@ -60,7 +62,7 @@ export default function Page() {
       existingWs.close();
     }
 
-    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/${id}`);
+    const ws = new WebSocket(getWebSocketUrl(id));
     wsRefs.current.set(id, ws);
 
     ws.onopen = () => {

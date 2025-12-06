@@ -17,6 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/health")
+def health_check():
+    """Health check endpoint for Electron startup"""
+    return {"status": "ok"}
+
 @app.get("/search")
 def search(query: str):
     return {"results": search_movies(query)}

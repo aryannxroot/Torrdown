@@ -1,12 +1,24 @@
 {
-  "name": "torrent-web-frontend",
-  "version": "0.1.0",
+  "name": "torrdown",
+  "version": "1.0.0",
+  "description": "Premium Torrent Downloader Desktop App",
   "private": true,
+  "main": "electron/main.js",
+  "author": "Torrdown",
+  "license": "MIT",
+  "homepage": "./",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "electron-builder install-app-deps",
+    "electron:dev": "concurrently -k \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:linux": "npm run build && electron-builder --linux",
+    "electron:build:all": "npm run build && electron-builder -mwl"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -27,10 +39,53 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.22",
+    "concurrently": "^9.1.2",
+    "electron": "^35.2.1",
+    "electron-builder": "^25.1.8",
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.17",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.torrdown.app",
+    "productName": "Torrdown",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend/dist/torrent_server",
+        "to": "python-backend/torrent_server"
+      }
+    ],
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Network"
+    },
+    "win": {
+      "target": ["nsis"],
+      "extraResources": [
+        {
+          "from": "../backend/dist/torrent_server.exe",
+          "to": "python-backend/torrent_server.exe"
+        }
+      ]
+    },
+    "mac": {
+      "target": ["dmg"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
