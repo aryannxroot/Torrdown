@@ -1,25 +1,41 @@
-// src/components/Logo.tsx
 "use client";
 
-import { motion } from "framer-motion";
+import React from "react";
 
-export function Logo() {
+function LogoComponent() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, type: "spring", stiffness: 160 }}
-      className="flex items-center gap-3"
+    <div
+      className="flex items-center gap-4"
+      data-cursor-hover
     >
-      <div className="relative h-11 w-11 rounded-2xl bg-zinc-900 border border-zinc-700 shadow-[0_0_40px_rgba(0,0,0,0.7)] overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,#ffffff,transparent_55%),radial-gradient(circle_at_100%_100%,#4ade80,transparent_55%)] opacity-80" />
-        <div className="relative flex h-full w-full items-center justify-center text-xl font-black text-zinc-950 mix-blend-screen">
-          T
+      {/* Logo mark */}
+      <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-[#0a0a0a] to-[#151515] border border-[#252525] overflow-hidden shadow-lg shadow-[#00f0ff]/10">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#00f0ff] via-[#7b61ff] to-[#ff3366] animate-gradient" />
+        
+        {/* Glass overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+        
+        {/* Letter T */}
+        <div className="relative flex h-full w-full items-center justify-center">
+          <span 
+            className="text-xl font-black text-white drop-shadow-lg" 
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            T
+          </span>
         </div>
       </div>
-      <span className="text-xl md:text-2xl font-extrabold tracking-[0.3em]">
+
+      {/* Text */}
+      <span 
+        className="text-2xl font-extrabold tracking-[0.3em] text-display"
+        style={{ textShadow: "0 0 30px rgba(0, 240, 255, 0.2)" }}
+      >
         TORRDOWN
       </span>
-    </motion.div>
+    </div>
   );
 }
+
+export const Logo = React.memo(LogoComponent);
