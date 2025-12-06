@@ -7,6 +7,10 @@
   "author": "Torrdown",
   "license": "MIT",
   "homepage": "./",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AryanShorthillsAI/Torrdown.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

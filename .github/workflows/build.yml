@@ -104,23 +104,17 @@ jobs:
       - name: Build Electron (Linux)
         if: matrix.platform == 'linux'
         working-directory: torrent-web-frontend
-        run: npx electron-builder --linux AppImage
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --linux AppImage --publish never
 
       - name: Build Electron (Windows)
         if: matrix.platform == 'win'
         working-directory: torrent-web-frontend
-        run: npx electron-builder --win nsis
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win nsis --publish never
 
       - name: Build Electron (macOS)
         if: matrix.platform == 'mac'
         working-directory: torrent-web-frontend
-        run: npx electron-builder --mac dmg
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac dmg --publish never
 
       - name: Upload Electron artifact
         uses: actions/upload-artifact@v4
