@@ -101,9 +101,16 @@ jobs:
         working-directory: torrent-web-frontend
         run: npm run build
 
-      - name: Clean dist folder
+      - name: Clean dist folder (Unix)
+        if: matrix.platform != 'win'
         working-directory: torrent-web-frontend
         run: rm -rf dist
+
+      - name: Clean dist folder (Windows)
+        if: matrix.platform == 'win'
+        working-directory: torrent-web-frontend
+        shell: pwsh
+        run: if (Test-Path dist) { Remove-Item -Recurse -Force dist }
 
       - name: Build Electron (Linux)
         if: matrix.platform == 'linux'
@@ -113,13 +120,12 @@ jobs:
       - name: Build Electron (Windows)
         if: matrix.platform == 'win'
         working-directory: torrent-web-frontend
-        shell: bash
-        run: rm -rf dist && npx electron-builder --win nsis --publish never
+        run: npx electron-builder --win nsis --publish never
 
       - name: Build Electron (macOS)
         if: matrix.platform == 'mac'
         working-directory: torrent-web-frontend
-        run: rm -rf dist && npx electron-builder --mac dmg --publish never
+        run: npx electron-builder --mac dmg --publish never
 
       - name: Upload Electron artifact
         uses: actions/upload-artifact@v4
