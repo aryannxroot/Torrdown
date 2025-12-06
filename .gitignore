@@ -22,6 +22,8 @@ out/
 # Electron
 dist-electron/
 python-backend/
+torrent-web-frontend/dist/
+torrent-web-frontend/out/
 *.dmg
 *.exe
 *.AppImage

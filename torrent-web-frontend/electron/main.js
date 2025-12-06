@@ -172,9 +172,6 @@ function createWindow() {
     mainWindow.loadFile(indexPath).catch(err => {
       console.error('Failed to load frontend:', err);
     });
-    
-    // Open DevTools to debug (remove in final production)
-    mainWindow.webContents.openDevTools();
   }
 
   mainWindow.on('closed', () => {

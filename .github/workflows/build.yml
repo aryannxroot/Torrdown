@@ -1,0 +1,162 @@
+name: Build & Release Desktop App
+
+on:
+  push:
+    branches:
+      - electron-app
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-backend:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            executable: torrent_server
+          - os: windows-latest
+            platform: win
+            executable: torrent_server.exe
+          - os: macos-latest
+            platform: mac
+            executable: torrent_server
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build backend with PyInstaller
+        working-directory: backend
+        run: |
+          pyinstaller --onefile --name torrent_server server.py --hidden-import=uvicorn.logging --hidden-import=uvicorn.loops --hidden-import=uvicorn.loops.auto --hidden-import=uvicorn.protocols --hidden-import=uvicorn.protocols.http --hidden-import=uvicorn.protocols.http.auto --hidden-import=uvicorn.protocols.websockets --hidden-import=uvicorn.protocols.websockets.auto --hidden-import=uvicorn.lifespan --hidden-import=uvicorn.lifespan.on --hidden-import=uvicorn.lifespan.off
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-${{ matrix.platform }}
+          path: backend/dist/${{ matrix.executable }}
+
+  build-electron:
+    needs: build-backend
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            backend-artifact: backend-linux
+            backend-exec: torrent_server
+          - os: windows-latest
+            platform: win
+            backend-artifact: backend-win
+            backend-exec: torrent_server.exe
+          - os: macos-latest
+            platform: mac
+            backend-artifact: backend-mac
+            backend-exec: torrent_server
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: torrent-web-frontend/package-lock.json
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.backend-artifact }}
+          path: backend/dist
+
+      - name: Make backend executable (Unix)
+        if: matrix.platform != 'win'
+        run: chmod +x backend/dist/${{ matrix.backend-exec }}
+
+      - name: Install frontend dependencies
+        working-directory: torrent-web-frontend
+        run: npm ci
+
+      - name: Build Next.js
+        working-directory: torrent-web-frontend
+        run: npm run build
+
+      - name: Build Electron (Linux)
+        if: matrix.platform == 'linux'
+        working-directory: torrent-web-frontend
+        run: npx electron-builder --linux AppImage
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Electron (Windows)
+        if: matrix.platform == 'win'
+        working-directory: torrent-web-frontend
+        run: npx electron-builder --win nsis
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Electron (macOS)
+        if: matrix.platform == 'mac'
+        working-directory: torrent-web-frontend
+        run: npx electron-builder --mac dmg
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Electron artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: torrdown-${{ matrix.platform }}
+          path: |
+            torrent-web-frontend/dist/*.AppImage
+            torrent-web-frontend/dist/*.exe
+            torrent-web-frontend/dist/*.dmg
+            torrent-web-frontend/dist/*.zip
+          if-no-files-found: ignore
+
+  release:
+    needs: build-electron
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/torrdown-linux/*
+            artifacts/torrdown-win/*
+            artifacts/torrdown-mac/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

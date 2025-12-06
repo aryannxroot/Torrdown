@@ -81,7 +81,13 @@
       ]
     },
     "mac": {
-      "target": ["dmg"]
+      "target": ["dmg"],
+      "extraResources": [
+        {
+          "from": "../backend/dist/torrent_server",
+          "to": "python-backend/torrent_server"
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
